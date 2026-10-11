@@ -67,9 +67,12 @@ You only need to (re)do this when:
 
 ```bash
 nvm use
-npx eas login              # one-time login to a free Expo account
-npx eas build --profile development --platform android
+npx eas-cli@latest login              # one-time login to a free Expo account
+npx eas-cli@latest build --profile development --platform android
 ```
+
+(`eas-cli` is intentionally **not** a project dependency — always run it via
+`npx eas-cli@latest`, not a locally installed version; see `expo-doctor`.)
 
 This queues a build on Expo's servers (free tier — typically 10-20
 minutes, mostly native/Gradle compilation, not something to redo often).
@@ -84,11 +87,18 @@ dependency is added.
 
 ```
 src/
-  app/            Expo Router routes - every file here is a screen
-    (tabs)/       Bottom tab navigator: Pantry, Recipes, Cooking, Settings
-  store/          Zustand state (pantry-store.ts, etc.)
-  global.css      Tailwind directives + font variables (NativeWind)
+  app/              Expo Router routes - every file here is a screen
+    _layout.tsx     Root Stack (single screen: the chat)
+    index.tsx       The "new recipe chat" screen (always opens fresh)
+  components/       History/Settings overlay panels, shared UI pieces
+  data/             Dummy chat/recipe data (placeholder until real
+                    matching engine + Gemini integration are built)
+  types/            Shared TypeScript types (e.g. ChatMessage)
+  global.css        Tailwind directives + font variables (NativeWind)
 ```
+
+Navigation is a single chat screen, not tabs — see `decisions.md`
+"Navigation (revised — no bottom tabs)" for why.
 
 ## Tech stack
 

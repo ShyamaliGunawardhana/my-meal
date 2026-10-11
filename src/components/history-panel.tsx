@@ -1,8 +1,9 @@
-import { Ionicons } from "@expo/vector-icons";
 import { FlatList, Modal, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Icon } from "@/components/icon";
 import { DUMMY_CHATS, type DummyChat } from "@/data/dummy-chats";
+import { EDIT_SVG } from "@/theme/svg-icons";
 
 interface HistoryPanelProps {
   visible: boolean;
@@ -37,7 +38,7 @@ export function HistoryPanel({
             onPress={onNewChat}
             className="flex-row items-center gap-2 mx-3 mb-2 px-3 py-3 rounded-xl active:bg-black/5"
           >
-            <Ionicons name="create-outline" size={20} color="#A16207" />
+            <Icon xml={EDIT_SVG} size={20} />
             <Text className="text-text-main text-base font-medium">
               New chat
             </Text>

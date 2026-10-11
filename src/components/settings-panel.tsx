@@ -49,7 +49,7 @@ function AllergiesScreen({ onClose }: { onClose: () => void }) {
       <SafeAreaView className="flex-1 bg-background">
         <View className="flex-row items-center px-4 pt-2 pb-3">
           <Pressable onPress={onClose} hitSlop={12} className="pr-2">
-            <Ionicons name="chevron-back" size={24} color="#2B2320" />
+            <Ionicons name="chevron-back" size={24} color="#24332B" />
           </Pressable>
           <Text className="text-lg font-semibold text-text-main">
             Allergies
@@ -69,7 +69,7 @@ function AllergiesScreen({ onClose }: { onClose: () => void }) {
             >
               <Text className="text-text-main text-base">{allergy}</Text>
               <Pressable onPress={() => handleRemove(allergy)} hitSlop={12}>
-                <Ionicons name="close" size={20} color="#C4432B" />
+                <Ionicons name="close" size={20} color="#B42318" />
               </Pressable>
             </View>
           ))}
@@ -86,7 +86,7 @@ function AllergiesScreen({ onClose }: { onClose: () => void }) {
           />
           <Pressable
             onPress={handleAdd}
-            className="bg-secondary rounded-xl px-5 items-center justify-center active:opacity-80"
+            className="bg-primary rounded-xl px-5 items-center justify-center active:opacity-80"
           >
             <Text className="text-white font-semibold">Add</Text>
           </Pressable>
@@ -130,7 +130,7 @@ export function SettingsPanel({ visible, onClose }: SettingsPanelProps) {
                 className="flex-row items-center justify-between bg-surface rounded-xl px-4 py-3 mb-6 active:opacity-80"
               >
                 <Text className="text-text-main text-base">Allergies</Text>
-                <Ionicons name="chevron-forward" size={18} color="#2B2320" />
+                <Ionicons name="chevron-forward" size={18} color="#24332B" />
               </Pressable>
 
               <Text className="text-xs font-semibold uppercase text-text-main/50 mb-2">
@@ -143,7 +143,7 @@ export function SettingsPanel({ visible, onClose }: SettingsPanelProps) {
                     onPress={() => setDiet(option)}
                     className={`px-4 py-2 rounded-full border ${
                       diet === option
-                        ? "bg-secondary border-secondary"
+                        ? "bg-primary border-primary"
                         : "bg-surface border-black/10"
                     }`}
                   >

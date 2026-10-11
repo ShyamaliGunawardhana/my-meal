@@ -6,8 +6,8 @@ export default function RootLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: "#FFF8F0" },
-        headerTintColor: "#2B2320",
+        headerStyle: { backgroundColor: "#FFF4E5" },
+        headerTintColor: "#24332B",
         headerShadowVisible: false,
       }}
     >
@@ -15,7 +15,7 @@ export default function RootLayout() {
         name="index"
         options={{
           headerTitle: "MyMeal",
-          headerTitleStyle: { fontWeight: "700", color: "#2B2320" },
+          headerTitleStyle: { fontWeight: "700", color: "#24332B" },
         }}
       />
     </Stack>
