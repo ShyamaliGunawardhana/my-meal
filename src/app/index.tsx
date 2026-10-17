@@ -6,7 +6,6 @@ import {
   Alert,
   FlatList,
   Image,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -26,6 +25,7 @@ import { RecipeSuggestionsCard } from "@/components/recipe-suggestions-card";
 import { SettingsPanel } from "@/components/settings-panel";
 import { DUMMY_CHATS, type DummyChat } from "@/data/dummy-chats";
 import { suggestRecipes } from "@/data/dummy-recipes";
+import { useKeyboardHeight } from "@/hooks/use-keyboard-height";
 import { isAllergen } from "@/lib/allergy";
 import { useProfileStore } from "@/state/profile";
 import {
@@ -75,7 +75,7 @@ export default function NewRecipeChatScreen() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const keyboardHeight = useKeyboardHeight();
   const [chats, setChats] = useState<DummyChat[]>(DUMMY_CHATS);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [chatDirty, setChatDirty] = useState(false);
@@ -96,22 +96,18 @@ export default function NewRecipeChatScreen() {
   // Recipes message id pending a change-confirmation dialog.
   const [changeSourceId, setChangeSourceId] = useState<string | null>(null);
 
-  // Edge-to-edge is the default on Android in SDK 54, so the window does
-  // not resize for the keyboard (adjustResize is ignored) and
-  // KeyboardAvoidingView cannot be relied on there. Track the keyboard
-  // height directly and pad the container by that amount instead.
+  const listRef = useRef<FlatList<ChatMessage>>(null);
+
+  // Always keep the latest content in view - onContentSizeChange alone
+  // proved unreliable, so any messages change defers a scrollToEnd
+  // until after the new items have laid out.
   useEffect(() => {
-    const show = Keyboard.addListener("keyboardDidShow", (e) =>
-      setKeyboardHeight(e.endCoordinates.height)
+    const timer = setTimeout(
+      () => listRef.current?.scrollToEnd({ animated: true }),
+      100
     );
-    const hide = Keyboard.addListener("keyboardDidHide", () =>
-      setKeyboardHeight(0)
-    );
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, []);
+    return () => clearTimeout(timer);
+  }, [messages]);
 
   // If an ingredient review card is still open (unconfirmed), freeze it
   // and hand its items back so they merge into the next pending batch.
@@ -461,9 +457,13 @@ export default function NewRecipeChatScreen() {
           }
         >
           <FlatList
+            ref={listRef}
             data={messages}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ flexGrow: 1, padding: 20 }}
+            onContentSizeChange={() =>
+              listRef.current?.scrollToEnd({ animated: true })
+            }
             renderItem={({ item }) =>
               item.role === "agent" && item.kind === "ingredients" ? (
                 <View className="flex-row items-start gap-2 mb-3 max-w-[85%] self-start">
@@ -608,7 +608,7 @@ export default function NewRecipeChatScreen() {
       <ConfirmDialog
         visible={changeSourceId !== null}
         title="Change recipe?"
-        message="Your current recipe selection will be discontinued. Your chat history stays as it is."
+        message="Your current recipe selection will be discontinued."
         confirmLabel="Change recipe"
         onConfirm={handleConfirmChangeRecipe}
         onCancel={() => setChangeSourceId(null)}

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useKeyboardHeight } from "@/hooks/use-keyboard-height";
 import { useProfileStore } from "@/state/profile";
 
 interface SettingsPanelProps {
@@ -26,6 +27,9 @@ function AllergiesScreen({ onClose }: { onClose: () => void }) {
   // to expo-secure-store; that comes with the profile milestone.
   const { allergies, addAllergy, removeAllergy } = useProfileStore();
   const [draft, setDraft] = useState("");
+  // Same keyboard-hides-input fix as the chat screen: pad by the real
+  // keyboard height since edge-to-edge never resizes the window.
+  const keyboardHeight = useKeyboardHeight();
 
   const handleAdd = () => {
     const trimmed = draft.trim();
@@ -70,7 +74,10 @@ function AllergiesScreen({ onClose }: { onClose: () => void }) {
           ))}
         </ScrollView>
 
-        <View className="flex-row gap-2 px-4 pb-4 pt-2">
+        <View
+          className="flex-row gap-2 px-4 pb-4 pt-2"
+          style={{ paddingBottom: 16 + keyboardHeight }}
+        >
           <TextInput
             value={draft}
             onChangeText={setDraft}
