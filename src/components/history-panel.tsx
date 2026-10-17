@@ -2,12 +2,13 @@ import { FlatList, Modal, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/icon";
-import { DUMMY_CHATS, type DummyChat } from "@/data/dummy-chats";
+import type { DummyChat } from "@/data/dummy-chats";
 import { EDIT_SVG } from "@/theme/svg-icons";
 
 interface HistoryPanelProps {
   visible: boolean;
   onClose: () => void;
+  chats: DummyChat[];
   onSelect: (chat: DummyChat) => void;
   onNewChat: () => void;
 }
@@ -18,6 +19,7 @@ interface HistoryPanelProps {
 export function HistoryPanel({
   visible,
   onClose,
+  chats,
   onSelect,
   onNewChat,
 }: HistoryPanelProps) {
@@ -45,7 +47,7 @@ export function HistoryPanel({
           </Pressable>
 
           <FlatList
-            data={DUMMY_CHATS}
+            data={chats}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingHorizontal: 12 }}
             renderItem={({ item }) => (

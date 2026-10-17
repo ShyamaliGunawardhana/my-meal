@@ -15,6 +15,8 @@ module.exports = {
         "text-main": "#24332B", // headings and body text
         "text-main-dark": "#F3EAE2",
         accent: "#A7C957", // fresh accent - small highlights/decorative elements only
+        "user-bubble": "#FFF6DF", // very light yellow - user message bubbles
+        "agent-bubble": "#E7F3EC", // very light green - agent bubbles and cards
         danger: "#B42318", // allergy conflicts and critical errors
         success: "#237A45", // validated success states (see decisions.md on how this may be used)
       },

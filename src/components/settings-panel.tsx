@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useProfileStore } from "@/state/profile";
+
 interface SettingsPanelProps {
   visible: boolean;
   onClose: () => void;
@@ -18,25 +20,18 @@ interface SettingsPanelProps {
 const DUMMY_DIET_OPTIONS = ["None", "Vegetarian", "Vegan"];
 const DUMMY_SELECTED_DIET = "Vegetarian";
 
-// Hardcoded starting list for the UI design only - not read from or
-// saved to expo-secure-store yet. Free text, not a fixed checklist:
-// the user must be able to add any allergy, not just pick from a
-// predefined set (same reasoning as pantry input).
-const DUMMY_ALLERGIES = ["Peanuts", "Gluten"];
-
 function AllergiesScreen({ onClose }: { onClose: () => void }) {
-  const [allergies, setAllergies] = useState(DUMMY_ALLERGIES);
+  // Shared app-wide allergy list (zustand) - the same list the
+  // ingredient confirmation card checks against. Still not persisted
+  // to expo-secure-store; that comes with the profile milestone.
+  const { allergies, addAllergy, removeAllergy } = useProfileStore();
   const [draft, setDraft] = useState("");
 
   const handleAdd = () => {
     const trimmed = draft.trim();
-    if (!trimmed || allergies.includes(trimmed)) return;
-    setAllergies((current) => [...current, trimmed]);
+    if (!trimmed) return;
+    addAllergy(trimmed);
     setDraft("");
-  };
-
-  const handleRemove = (allergy: string) => {
-    setAllergies((current) => current.filter((item) => item !== allergy));
   };
 
   return (
@@ -68,7 +63,7 @@ function AllergiesScreen({ onClose }: { onClose: () => void }) {
               className="flex-row items-center justify-between bg-surface rounded-xl px-4 py-3 mb-2 border border-black/5"
             >
               <Text className="text-text-main text-base">{allergy}</Text>
-              <Pressable onPress={() => handleRemove(allergy)} hitSlop={12}>
+              <Pressable onPress={() => removeAllergy(allergy)} hitSlop={12}>
                 <Ionicons name="close" size={20} color="#B42318" />
               </Pressable>
             </View>
