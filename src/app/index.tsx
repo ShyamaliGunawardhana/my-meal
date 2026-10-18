@@ -17,6 +17,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ChatBackground } from "@/components/chat-background";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import {
+  CookingModeScreen,
+  type CookingExchange,
+} from "@/components/cooking-mode-screen";
 import { HistoryPanel } from "@/components/history-panel";
 import { Icon } from "@/components/icon";
 import { IngredientReviewCard } from "@/components/ingredient-review-card";
@@ -26,6 +30,8 @@ import { SettingsPanel } from "@/components/settings-panel";
 import { DUMMY_CHATS, type DummyChat } from "@/data/dummy-chats";
 import { suggestRecipes } from "@/data/dummy-recipes";
 import { useKeyboardHeight } from "@/hooks/use-keyboard-height";
+import { useSpeechToText } from "@/hooks/use-speech-to-text";
+import { useTextToSpeech } from "@/hooks/use-text-to-speech";
 import { isAllergen } from "@/lib/allergy";
 import { useProfileStore } from "@/state/profile";
 import {
@@ -87,6 +93,11 @@ export default function NewRecipeChatScreen() {
   // add-ingredients affordances, and the input row for the rest of the
   // chat.
   const [recipeSelectedId, setRecipeSelectedId] = useState<string | null>(null);
+  // Title of the selected recipe, shown in the hands-free cooking
+  // screen header.
+  const [recipeSelectedTitle, setRecipeSelectedTitle] = useState<string | null>(
+    null
+  );
   // The recipes message that is "live" - its tiles accept taps, and
   // once it holds a selection it carries the Change recipe button.
   // Older recipes messages stay frozen in history.
@@ -95,8 +106,35 @@ export default function NewRecipeChatScreen() {
   >(null);
   // Recipes message id pending a change-confirmation dialog.
   const [changeSourceId, setChangeSourceId] = useState<string | null>(null);
+  const [cookingModeOpen, setCookingModeOpen] = useState(false);
 
   const listRef = useRef<FlatList<ChatMessage>>(null);
+
+  // On-device text-to-speech for reading agent messages aloud.
+  const {
+    speakingId,
+    speak: speakMessage,
+    stop: stopMessageSpeech,
+  } = useTextToSpeech();
+
+  // On-device speech-to-text for the mic button - live-updates the
+  // chat draft as the user talks, same as typing.
+  const {
+    listening: micListening,
+    start: startMic,
+    stop: stopMic,
+  } = useSpeechToText({
+    onResult: (text) => setDraft(text),
+  });
+
+  const handleMicPress = () => {
+    if (micListening) {
+      stopMic();
+    } else {
+      setDraft("");
+      startMic();
+    }
+  };
 
   // Always keep the latest content in view - onContentSizeChange alone
   // proved unreliable, so any messages change defers a scrollToEnd
@@ -270,6 +308,7 @@ export default function NewRecipeChatScreen() {
   const handleSelectRecipe = (recipe: RecipeSuggestion) => {
     if (recipeSelectedId) return;
     setRecipeSelectedId(recipe.id);
+    setRecipeSelectedTitle(recipe.title);
     setMessages((current) => [
       ...current,
       {
@@ -306,6 +345,19 @@ export default function NewRecipeChatScreen() {
     ]);
     setActiveRecipesMessageId(newMessageId);
     setRecipeSelectedId(null);
+    setRecipeSelectedTitle(null);
+    setChatDirty(true);
+  };
+
+  // Hands-free cooking Q&A turns are appended to the main chat so the
+  // conversation stays complete even though the mode is an overlay.
+  const handleCookingExchange = ({ question, answer }: CookingExchange) => {
+    const now = Date.now();
+    setMessages((current) => [
+      ...current,
+      { id: `${now}-cook-q`, role: "user", text: question },
+      { id: `${now}-cook-a`, role: "agent", text: answer },
+    ]);
     setChatDirty(true);
   };
 
@@ -352,6 +404,7 @@ export default function NewRecipeChatScreen() {
     setPendingIngredients([]);
     setCurrentChatId(chat.id);
     setRecipeSelectedId(null);
+    setRecipeSelectedTitle(null);
     setActiveRecipesMessageId(null);
     setChangeSourceId(null);
     setChatDirty(false);
@@ -364,6 +417,7 @@ export default function NewRecipeChatScreen() {
     setDraft("");
     setCurrentChatId(null);
     setRecipeSelectedId(null);
+    setRecipeSelectedTitle(null);
     setActiveRecipesMessageId(null);
     setChangeSourceId(null);
     setChatDirty(false);
@@ -517,9 +571,31 @@ export default function NewRecipeChatScreen() {
                 <View className="flex-row items-start gap-2 mb-3 max-w-[85%] self-start">
                   <Icon xml={CHEF_SVG} size={28} />
                   <View className="flex-1 bg-agent-bubble border border-black/5 rounded-2xl px-4 py-3">
-                    <Text className="text-text-main text-base">
-                      {item.text}
-                    </Text>
+                    <View className="flex-row items-start gap-2">
+                      <Text className="text-text-main text-base flex-1">
+                        {item.text}
+                      </Text>
+                      {item.text.length > 0 && recipeSelectedId !== null && (
+                        <Pressable
+                          onPress={() =>
+                            speakingId === item.id
+                              ? stopMessageSpeech()
+                              : speakMessage(item.id, item.text)
+                          }
+                          hitSlop={8}
+                        >
+                          <Ionicons
+                            name={
+                              speakingId === item.id
+                                ? "volume-high"
+                                : "volume-medium-outline"
+                            }
+                            size={18}
+                            color="#2E7D5B"
+                          />
+                        </Pressable>
+                      )}
+                    </View>
                   </View>
                 </View>
               )
@@ -548,6 +624,21 @@ export default function NewRecipeChatScreen() {
               </View>
             )}
 
+          {recipeSelectedId !== null && (
+            <View className="flex-row items-center justify-between mx-4 mb-2 bg-surface border border-black/10 rounded-2xl px-4 py-2">
+              <Text className="text-text-main/70 text-sm">Ready to cook?</Text>
+              <Pressable
+                onPress={() => setCookingModeOpen(true)}
+                className="flex-row items-center gap-1.5 bg-primary rounded-xl px-4 py-2 active:opacity-80"
+              >
+                <Ionicons name="headset" size={16} color="#FFFFFF" />
+                <Text className="text-white font-semibold">
+                  Hands-free cooking
+                </Text>
+              </Pressable>
+            </View>
+          )}
+
           <View className="flex-row items-end gap-2 px-4 pb-4">
             <View className="flex-1 relative justify-center">
               <TextInput
@@ -571,8 +662,11 @@ export default function NewRecipeChatScreen() {
                   <Icon xml={CAMERA_SVG} size={20} />
                 </Pressable>
                 <Pressable
+                  onPress={handleMicPress}
                   hitSlop={8}
-                  className="w-9 h-9 items-center justify-center rounded-full active:opacity-70"
+                  className={`w-9 h-9 items-center justify-center rounded-full active:opacity-70 ${
+                    micListening ? "bg-danger/15" : ""
+                  }`}
                 >
                   <Icon xml={MIC_SVG} size={20} />
                 </Pressable>
@@ -612,6 +706,12 @@ export default function NewRecipeChatScreen() {
         confirmLabel="Change recipe"
         onConfirm={handleConfirmChangeRecipe}
         onCancel={() => setChangeSourceId(null)}
+      />
+      <CookingModeScreen
+        visible={cookingModeOpen}
+        recipeTitle={recipeSelectedTitle ?? "your recipe"}
+        onClose={() => setCookingModeOpen(false)}
+        onExchange={handleCookingExchange}
       />
     </>
   );

@@ -37,8 +37,14 @@
         "expo-image-picker",
         {
           "photosPermission": "MyMeal uses your photos to recognize ingredients.",
-          "cameraPermission": "MyMeal uses your camera to recognize ingredients.",
-          "microphonePermission": false
+          "cameraPermission": "MyMeal uses your camera to recognize ingredients."
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "MyMeal uses your microphone to let you add ingredients and ask cooking questions by voice.",
+          "speechRecognitionPermission": "MyMeal uses speech recognition to turn what you say into text."
         }
       ]
     ],
